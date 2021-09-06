@@ -1,1 +1,7 @@
 node_modules
+*.pdf
+uploads/*
+!uploads/.gitkeep
+test_pdfs/*
+!test_pdfs/.gitkeep
+*.txt
