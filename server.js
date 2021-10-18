@@ -102,11 +102,11 @@ app.post('/api/upload', async (req, res, next) => {
     const buffer = Buffer.from(file.replace(/^data:application\/pdf;base64,/, ""),'base64');
     // Store in uploads
     const ts = Date.now();
-    const jarpath = path.join(__dirname, 'pdfbox-app-3.0.0-RC1.jar')
+    const jarpath = path.join(__dirname, 'pdfbox-app-2.0.24.jar')
     const outputPdfFilepath = path.join(__dirname, 'uploads', `${filename}.${ts}.pdf`);
     const outputTxtFilepath = path.join(__dirname, 'uploads', `${filename}.${ts}.txt`);
     fs.writeFileSync(outputPdfFilepath, buffer)
-    shell.exec(`java -jar ${jarpath} export:text --input=${outputPdfFilepath} --output=${outputTxtFilepath}`)
+    shell.exec(`java -jar ${jarpath} ExtractText ${outputPdfFilepath}`)
     let txt = fs.readFileSync(outputTxtFilepath).toString()
     fs.unlinkSync(outputTxtFilepath);
     fs.unlinkSync(outputPdfFilepath);

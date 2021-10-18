@@ -64,10 +64,10 @@ async function deleteTheDoc(id) {
 
 function convertDoc(id) {
   log(`convertDoc ${id}`);
-  const jarpath = path.join(__dirname, '..', 'pdfbox-app-3.0.0-RC1.jar')
+  const jarpath = path.join(__dirname, '..', 'pdfbox-app-2.0.24.jar')
   const filepath = path.join(__dirname, '..', 'test_pdfs',`${id}.pdf`)
   const outpath = path.join(__dirname, '..', 'test_pdfs',`${id}.txt`)
-  shell.exec(`java -jar ${jarpath} export:text --input=${filepath} --output=${outpath}`)
+  shell.exec(`java $JAVA_OPTS -jar ${jarpath} ExtractText ${outputPdfFilepath}`)
 }
 
 async function closeConnection() {
