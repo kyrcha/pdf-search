@@ -67,7 +67,7 @@ function convertDoc(id) {
   const jarpath = path.join(__dirname, '..', 'pdfbox-app-2.0.24.jar')
   const filepath = path.join(__dirname, '..', 'test_pdfs',`${id}.pdf`)
   const outpath = path.join(__dirname, '..', 'test_pdfs',`${id}.txt`)
-  shell.exec(`java $JAVA_OPTS -jar ${jarpath} ExtractText ${outputPdfFilepath}`)
+  shell.exec(`java -jar ${jarpath} ExtractText ${filepath}`)
 }
 
 async function closeConnection() {
@@ -79,22 +79,15 @@ async function closeConnection() {
   try {
     convertDoc(1)
     convertDoc(2)
-    convertDoc(3)
-    convertDoc(4)
-    convertDoc(5)
     await addPdfDoc(1)
     await addPdfDoc(2)
-    await addPdfDoc(3)
-    await addPdfDoc(4)
-    await addPdfDoc(5)
     await waitForIndexing()
-    const { body } = await searchNg('Χώρ');
+    const { body } = await searchNg('Boring');
     log(JSON.stringify(body.hits.hits))
     log(body.hits.hits.length)
-    await getTheDoc(4)
+    await getTheDoc(1)
     await deleteTheDoc(1)
-    await deleteTheDoc(3)
-    await deleteTheDoc(4)
+    await deleteTheDoc(2)
     await closeConnection()
   } catch(err) {
     log(err)

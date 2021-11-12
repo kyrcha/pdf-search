@@ -4,5 +4,7 @@ uploads/*
 !uploads/.gitkeep
 test_pdfs/*
 !test_pdfs/.gitkeep
+!test_pdfs/1.pdf
+!test_pdfs/2.pdf
 *.txt
 .env

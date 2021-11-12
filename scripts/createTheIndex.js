@@ -79,31 +79,15 @@ function addPdfDoc() {
       index: 'kb',
       id: 316,
       body: {
-          "bodytext": `Receipt from Mullvad VPN AB
-          Receipt #2554653
-          Service Date paid Amount (incl. VAT)
-          Mullvad VPN 1 month(s) 2021-07-13 5.00 EUR
-          VAT: SE559238400101
-          Org-No: 559238-4001
-          Website: www.mullvad.net
-          Mail: support@mullvad.net
-          Mullvad VPN AB
-          Box 53049
-          400 14 Gothenburg
-          Sweden
-          Mullvad always pays VAT monthly to the correct tax authority based on the payment information we get from the payment processor.
-          Country VAT % VAT Amount (excl. VAT)
-          Non-EU 0 0.00 5.00
-          Luxembourg 17 0.73 4.27
-          Malta 18 0.76 4.24
-          Cyprus, Germany, Romania 19 0.80 4.20
-          Austria, Bulgaria, Estonia, France, Slovakia, United Kingdom 20 0.83 4.17
-          Belgium, Czechia, Latvia, Lithuania, Netherlands, Spain 21 0.87 4.13
-          Italy, Slovenia 22 0.90 4.10
-          Ireland, Poland, Portugal 23 0.94 4.06
-          Finland, Greece 24 0.97 4.03
-          Croatia, Denmark, Sweden 25 1.00 4.00
-          Hungary 27 1.06 3.94`,
+          "bodytext": `This is a small demonstration .pdf file -
+          just for use in the Virtual Mechanics tutorials. More text. And more
+          text. And more text. And more text. And more text.
+          And more text. And more text. And more text. And more text. And more
+          text. And more text. Boring, zzzzz. And more text. And more text. And
+          more text. And more text. And more text. And more text. And more text.
+          And more text. And more text.
+          And more text. And more text. And more text. And more text. And more
+          text. And more text. And more text. Even more. Continued on page 2 ...`,
       }
   });
 }
@@ -117,7 +101,7 @@ function searchNg() {
             "query": "sw",
             "type": "cross_fields",
             "fields": ["bodytext.ngram"],
-            "operator": "and"
+            "minimum_should_match": "100%"
           }
         }
       }
@@ -157,10 +141,11 @@ return Promise.resolve()
     .then(searchNg)
     .then(getTheDoc)
     .then(deleteTheDoc)
-    .then(getTheDoc)
     .then(closeConnection)
+    .then(() => {
+      console.log("done")
+    })
     .catch((err) => {
-      // console.error(err)
       console.error(err.meta.statusCode)
     });
 

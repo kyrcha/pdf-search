@@ -3,9 +3,10 @@ const express = require('express')
 const fs = require('fs')
 const path = require('path')
 const shell = require('shelljs');
+const slugify = require('slugify');
 
 const { Client } = require('@elastic/elasticsearch')
-const client = new Client({ node: 'http://localhost:9200' })
+const client = new Client({ node: process.env.ELASTIC_URL })
 const app = express()
 
 const size = 20;
@@ -20,6 +21,20 @@ app.get('/', (req, res) => {
   res.send('PDF search')
 })
 
+app.get('/api/documents/delete/:id', async (req, res) => {
+  console.log(`Delete doc ${req.params.id}`);
+  try {
+    const { body } = await client.delete({id: req.params.id, index: 'kb'});
+    return res.json(body);
+  } catch(err) {
+    console.log(err);
+    if(err.meta.statusCode === 404) {
+      return res.sendStatus(404);
+    }
+    res.sendStatus(500);
+  }
+});
+
 app.get('/api/documents/:id', async (req, res) => {
   console.log(`Get doc ${req.params.id}`);
   try {
@@ -28,7 +43,7 @@ app.get('/api/documents/:id', async (req, res) => {
   } catch(err) {
     console.log(err);
     if(err.meta.statusCode === 404) {
-      return res.sendStatus(404);  
+      return res.sendStatus(404);
     }
     res.sendStatus(500);
   }
@@ -42,7 +57,7 @@ app.delete('/api/documents/:id', async (req, res) => {
   } catch(err) {
     console.log(err);
     if(err.meta.statusCode === 404) {
-      return res.sendStatus(404);  
+      return res.sendStatus(404);
     }
     res.sendStatus(500);
   }
@@ -69,12 +84,10 @@ app.get('/api/documents', async (req, res) => {
   }
 })
 
-// Todo check if I want to do with tokenizer
 // https://stackoverflow.com/questions/57800448/need-to-know-how-to-search-multiple-keyword-in-a-same-field-in-elasticsearch
-
 app.get('/api/search', async (req, res) => {
   try {
-    console.log(req.query.keywords.split(" ").join(" AND "))
+    console.log(req.query.keywords.split(" ").join(" OR "))
     const { body } = await client.search({
       index: 'kb',
       body: {
@@ -83,12 +96,19 @@ app.get('/api/search', async (req, res) => {
             "query": req.query.keywords,
             "type": "cross_fields",
             "fields": ["bodytext.ngram"],
-            "operator": "and"
+            "minimum_should_match": "100%"
           }
         }
       }
     })
-    res.json(body)
+    const results = body.hits.hits.map(hit => {
+    return {
+      id: hit._id,
+      score: hit._score,
+      body: hit._source.bodytext
+     }
+    })
+    res.json(results)
   } catch(err) {
     console.log(err);
     res.sendStatus(500);
@@ -98,14 +118,21 @@ app.get('/api/search', async (req, res) => {
 app.post('/api/upload', async (req, res, next) => {
   try {
     const { id, filename, file } = req.body;
-    console.log(`Upload: ${id}`);
-    const buffer = Buffer.from(file.replace(/^data:application\/pdf;base64,/, ""),'base64');
+    console.log(`Uploading: ${id} - ${filename}`);
+    // remove header
+    const noheader_file = file.replace(/^data:application\/pdf;base64,/, "")
+    //remove those line breaks
+    const nonewlines_file = noheader_file.replace(/(\r\n|\n|\r)/gm, "");
+    const buffer = Buffer.from(nonewlines_file,'base64');
     // Store in uploads
     const ts = Date.now();
     const jarpath = path.join(__dirname, 'pdfbox-app-2.0.24.jar')
-    const outputPdfFilepath = path.join(__dirname, 'uploads', `${filename}.${ts}.pdf`);
-    const outputTxtFilepath = path.join(__dirname, 'uploads', `${filename}.${ts}.txt`);
+    const cleared_filename = slugify(filename);
+    const outputPdfFilepath = path.join(__dirname, 'uploads', `${cleared_filename}.${ts}.pdf`);
+    const outputTxtFilepath = path.join(__dirname, 'uploads', `${cleared_filename}.${ts}.txt`);
     fs.writeFileSync(outputPdfFilepath, buffer)
+    // export DISPLAY=:0
+    // export JAVA_OPTS="-Djava.awt.headless=true"
     shell.exec(`java -jar ${jarpath} ExtractText ${outputPdfFilepath}`)
     let txt = fs.readFileSync(outputTxtFilepath).toString()
     fs.unlinkSync(outputTxtFilepath);
@@ -120,14 +147,16 @@ app.post('/api/upload', async (req, res, next) => {
             bodytext: txt
         }
       })
+      console.log(`Uploaded: ${id}`)
       await client.indices.refresh({index: 'kb'})
+      console.log(`Refreshed index: ${id}`);
       res.sendStatus(201);
     } else {
       res.status(400).json({"message": "The text extracted is not long enough to be indexes (less than 100 chars)"});
     }
   } catch(err) {
     console.log(err);
-    res.sendStatus(500);
+    res.status(500).json({"message": JSON.stringify(err)});
   }
 });
 
