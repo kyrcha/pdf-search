@@ -1,9 +1,10 @@
+require('dotenv').config();
 const { Client } = require('@elastic/elasticsearch')
 const fs = require('fs')
 const path = require('path')
 const shell = require('shelljs')
 
-const client = new Client({ node: 'http://localhost:9200' })
+const client = new Client({ node: process.env.ELASTIC_URL })
 
 var log = console.log.bind(console);
 
@@ -15,7 +16,7 @@ async function addPdfDoc(id) {
   txt = txt.replace(/\s+/g, ' ').trim()
   if(txt.length > 100) {
     return await client.index({
-        index: 'kb',
+        index: process.env.INDEX,
         id,
         body: {
             bodytext: txt
@@ -31,7 +32,7 @@ async function addPdfDoc(id) {
 async function searchNg(query) {
   log(`query`)
   return await client.search({
-      index: 'kb',
+      index: process.env.INDEX,
       body: {
         "query": {
           "multi_match": {
@@ -54,12 +55,12 @@ async function waitForIndexing() {
 
 async function getTheDoc(id) {
   log(`getTheDoc ${id}`);
-  return await client.get({id, index: 'kb'});
+  return await client.get({id, index: process.env.INDEX});
 }
 
 async function deleteTheDoc(id) {
   log(`deleteTheDoc ${id}`);
-  return await client.delete({id, index: 'kb'});
+  return await client.delete({id, index: process.env.INDEX});
 }
 
 function convertDoc(id) {

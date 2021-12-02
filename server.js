@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
 app.get('/api/documents/delete/:id', async (req, res) => {
   console.log(`Delete doc ${req.params.id}`);
   try {
-    const { body } = await client.delete({id: req.params.id, index: 'kb'});
+    const { body } = await client.delete({id: req.params.id, index: process.env.INDEX});
     return res.json(body);
   } catch(err) {
     console.log(err);
@@ -38,7 +38,7 @@ app.get('/api/documents/delete/:id', async (req, res) => {
 app.get('/api/documents/:id', async (req, res) => {
   console.log(`Get doc ${req.params.id}`);
   try {
-    const { body } =  await client.get({id: req.params.id, index: 'kb'});
+    const { body } =  await client.get({id: req.params.id, index: process.env.INDEX});
     return res.json(body);
   } catch(err) {
     console.log(err);
@@ -52,7 +52,7 @@ app.get('/api/documents/:id', async (req, res) => {
 app.delete('/api/documents/:id', async (req, res) => {
   console.log(`Delete doc ${req.params.id}`);
   try {
-    const { body } = await client.delete({id: req.params.id, index: 'kb'});
+    const { body } = await client.delete({id: req.params.id, index: process.env.INDEX});
     return res.json(body);
   } catch(err) {
     console.log(err);
@@ -68,7 +68,7 @@ app.get('/api/documents', async (req, res) => {
     let page = 0;
     if(req.query.page) page = parseInt(req.query.page);
     const { body } = await client.search({
-      index: 'kb',
+      index: process.env.INDEX,
       "from": size*page,
       "size": size,
       body: {
@@ -89,7 +89,7 @@ app.get('/api/search', async (req, res) => {
   try {
     console.log(req.query.keywords.split(" ").join(" OR "))
     const { body } = await client.search({
-      index: 'kb',
+      index: process.env.INDEX,
       body: {
         "query": {
           "multi_match": {
@@ -141,14 +141,14 @@ app.post('/api/upload', async (req, res, next) => {
     txt = txt.replace(/\s+/g, ' ').trim()
     if(txt.length > 100) {
       await client.index({
-        index: 'kb',
+        index: process.env.INDEX,
         id,
         body: {
             bodytext: txt
         }
       })
       console.log(`Uploaded: ${id}`)
-      await client.indices.refresh({index: 'kb'})
+      await client.indices.refresh({index: process.env.INDEX})
       console.log(`Refreshed index: ${id}`);
       res.sendStatus(201);
     } else {

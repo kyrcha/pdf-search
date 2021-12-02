@@ -1,12 +1,13 @@
+require('dotenv').config();
 const { Client } = require('@elastic/elasticsearch')
-const client = new Client({ node: 'http://localhost:9200' })
+const client = new Client({ node: process.env.ELASTIC_URL })
 
 var log = console.log.bind(console);
 
 function dropNgIndex() {
   console.log("dropNgIndex")
   return client.indices.delete({
-      index: 'kb',
+      index: process.env.INDEX,
   });
 }
 
@@ -65,7 +66,7 @@ function createNgIndex() {
           }
   };
   return client.indices.create({
-      index: 'kb',
+      index: process.env.INDEX,
       body: {
           settings: settings,
           mappings: mapping
@@ -76,7 +77,7 @@ function createNgIndex() {
 function addPdfDoc() {
   console.log("addPdfDoc")
   return client.index({
-      index: 'kb',
+      index: process.env.INDEX,
       id: 316,
       body: {
           "bodytext": `This is a small demonstration .pdf file -
@@ -94,7 +95,7 @@ function addPdfDoc() {
 
 function searchNg() {
   return client.search({
-      index: 'kb',
+      index: process.env.INDEX,
       body: {
         "query": {
           "multi_match": {
@@ -118,13 +119,13 @@ function waitForIndexing() {
 }
 
 function getTheDoc() {
-  return client.get({id: 316, index: 'kb'}).then(data => {
+  return client.get({id: 316, index: process.env.INDEX}).then(data => {
     console.log(JSON.stringify(data.body));
   });
 }
 
 function deleteTheDoc() {
-  return client.delete({id: 316, index: 'kb'}).then(data => {
+  return client.delete({id: 316, index: process.env.INDEX}).then(data => {
     console.log(JSON.stringify(data.body));
   });
 }
